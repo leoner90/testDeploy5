@@ -39,7 +39,7 @@ public class ReviewController {
     }
 
     @GetMapping("/received/{userId}")
-    public ResponseEntity<List<ReviewResponse>> getReviewsByReviewer(@PathVariable Long userId)
+    public ResponseEntity<List<ReviewResponse>> getReviewsReceived(@PathVariable Long userId)
     {
         return ResponseEntity.ok(reviewService.getReviewsReceivedBy(userId));
     }

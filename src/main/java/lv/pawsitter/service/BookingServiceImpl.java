@@ -5,7 +5,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,7 +79,6 @@ public class BookingServiceImpl implements BookingService {
   @Transactional
   public BookingResponse updateBooking(Long bookingId, String ownerEmail, UpdateBookingRequest request) {
     Booking booking = getBooking(bookingId);
-    requireOwner(booking, ownerEmail);
 
     if (booking.getStatus() != BookingStatus.REQUESTED) {
       throw new InvalidBookingOperationException("Only requested bookings can be updated");
@@ -169,7 +167,7 @@ public class BookingServiceImpl implements BookingService {
     requireOwner(booking, ownerEmail);
 
     return changeStatus(
-        booking,
+        bookingId,
         BookingStatus.CANCELLED,
         EnumSet.of(BookingStatus.REQUESTED, BookingStatus.ACCEPTED),
         "Only requested or accepted bookings can be cancelled");
@@ -182,7 +180,7 @@ public class BookingServiceImpl implements BookingService {
     requireSitter(booking, sitterEmail);
 
     return changeStatus(
-        booking,
+        bookingId,
         BookingStatus.DECLINED,
         EnumSet.of(BookingStatus.REQUESTED),
         "Only requested bookings can be declined");
@@ -195,7 +193,7 @@ public class BookingServiceImpl implements BookingService {
     requireSitter(booking, sitterEmail);
 
     return changeStatus(
-        booking,
+        bookingId,
         BookingStatus.COMPLETED,
         EnumSet.of(BookingStatus.ACCEPTED),
         "Only accepted bookings can be completed");
