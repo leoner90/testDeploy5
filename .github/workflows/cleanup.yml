@@ -1,18 +1,49 @@
-name: Clean PawSitter Containers
-
+name: Full Clean PawSitter
 
 on:
   workflow_dispatch:
 
 jobs:
-  cleanup:
+  full-clean:
     runs-on: self-hosted
 
     steps:
-      - name: Remove PawSitter containers
-        run: |
-          docker rm -f pawsitter-mysql || true
-          docker rm -f pawsitter-app || true
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Show remaining PawSitter containers
-        run: docker ps -a --filter "name=pawsitter"
+      - name: Remove Compose containers, network, and volumes
+        run: |
+          docker compose down -v --remove-orphans || true
+
+      - name: Remove remaining PawSitter containers
+        run: |
+          docker rm -f pawsitter-app || true
+          docker rm -f pawsitter-mysql || true
+
+      - name: Remove PawSitter images
+        run: |
+          docker images --format '{{.Repository}}:{{.Tag}}' \
+            | grep '^pawsitter' \
+            | xargs -r docker rmi -f
+
+      - name: Remove remaining PawSitter volumes
+        run: |
+          docker volume ls --format '{{.Name}}' \
+            | grep 'pawsitter' \
+            | xargs -r docker volume rm -f
+
+      - name: Remove unused Docker resources
+        run: |
+          docker system prune -f
+
+      - name: Show remaining PawSitter resources
+        if: always()
+        run: |
+          echo "Containers:"
+          docker ps -a --filter "name=pawsitter"
+
+          echo "Images:"
+          docker images | grep pawsitter || true
+
+          echo "Volumes:"
+          docker volume ls | grep pawsitter || true
