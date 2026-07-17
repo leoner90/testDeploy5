@@ -1,4 +1,4 @@
-name: Full Docker Cleanup
+name: Delete Old MySQL Volumes
 
 on:
   workflow_dispatch:
@@ -8,42 +8,24 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Show Docker resources before cleanup
+      - name: Show target volumes
         run: |
-          echo "Containers:"
-          docker ps -a
+          docker volume ls --format '{{.Name}}' \
+            | grep -E '^(fixmycity_mysql-data|pawsitter_pawsitter-mysql-data|test2deploy_pawsitter-mysql-data|testdeploy4_pawsitter-mysql-data|testdeploy5_pawsitter-mysql-data|testdeploy_pawsitter-mysql-data)$' \
+            || true
 
-          echo "Volumes:"
-          docker volume ls
-
-          echo "Images:"
-          docker image ls
-
-      - name: Remove all containers
+      - name: Remove target volumes
         run: |
-          docker ps -aq | xargs -r docker stop
-          docker ps -aq | xargs -r docker rm -f
+          docker volume rm -f \
+            fixmycity_mysql-data \
+            pawsitter_pawsitter-mysql-data \
+            test2deploy_pawsitter-mysql-data \
+            testdeploy4_pawsitter-mysql-data \
+            testdeploy5_pawsitter-mysql-data \
+            testdeploy_pawsitter-mysql-data \
+            || true
 
-      - name: Remove all volumes
-        run: |
-          docker volume ls -q | xargs -r docker volume rm -f
-
-      - name: Remove all images
-        run: |
-          docker image ls -q | sort -u | xargs -r docker image rm -f
-
-      - name: Remove unused Docker resources
-        run: |
-          docker system prune -a --volumes -f
-
-      - name: Show Docker resources after cleanup
+      - name: Verify remaining volumes
         if: always()
         run: |
-          echo "Containers:"
-          docker ps -a
-
-          echo "Volumes:"
           docker volume ls
-
-          echo "Images:"
-          docker image ls
