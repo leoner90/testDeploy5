@@ -1,0 +1,49 @@
+name: Full Docker Cleanup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: self-hosted
+
+    steps:
+      - name: Show Docker resources before cleanup
+        run: |
+          echo "Containers:"
+          docker ps -a
+
+          echo "Volumes:"
+          docker volume ls
+
+          echo "Images:"
+          docker image ls
+
+      - name: Remove all containers
+        run: |
+          docker ps -aq | xargs -r docker stop
+          docker ps -aq | xargs -r docker rm -f
+
+      - name: Remove all volumes
+        run: |
+          docker volume ls -q | xargs -r docker volume rm -f
+
+      - name: Remove all images
+        run: |
+          docker image ls -q | sort -u | xargs -r docker image rm -f
+
+      - name: Remove unused Docker resources
+        run: |
+          docker system prune -a --volumes -f
+
+      - name: Show Docker resources after cleanup
+        if: always()
+        run: |
+          echo "Containers:"
+          docker ps -a
+
+          echo "Volumes:"
+          docker volume ls
+
+          echo "Images:"
+          docker image ls
