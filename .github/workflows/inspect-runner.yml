@@ -1,0 +1,46 @@
+name: Inspect Docker Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: self-hosted
+
+    steps:
+      - name: Show runner information
+        run: |
+          echo "Runner name: $RUNNER_NAME"
+          echo "Runner OS: $RUNNER_OS"
+          echo "Machine hostname: $(hostname)"
+          echo "Current user: $(whoami)"
+
+      - name: Show all containers
+        run: |
+          echo "===== CONTAINERS ====="
+          docker ps -a
+
+      - name: Show all Docker volumes
+        run: |
+          echo "===== VOLUMES ====="
+          docker volume ls
+
+      - name: Show all Docker images
+        run: |
+          echo "===== IMAGES ====="
+          docker image ls
+
+      - name: Show Docker networks
+        run: |
+          echo "===== NETWORKS ====="
+          docker network ls
+
+      - name: Show container mounts
+        run: |
+          echo "===== CONTAINER MOUNTS ====="
+          for container in $(docker ps -aq); do
+            echo
+            echo "Container: $(docker inspect --format='{{.Name}}' "$container")"
+            docker inspect "$container" \
+              --format='{{range .Mounts}}Type={{.Type}} Name={{.Name}} Source={{.Source}} Destination={{.Destination}}{{println}}{{end}}'
+          done
